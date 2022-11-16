@@ -1,4 +1,4 @@
-module github.com/sunker/async-query-data
+module github.com/sunker/async-query-data-go
 
 go 1.19
 
