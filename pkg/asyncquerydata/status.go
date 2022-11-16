@@ -1,4 +1,4 @@
-package asyncds
+package asyncquerydata
 
 // QueryStatus represents the status of an async query
 type QueryStatus uint32

@@ -1,4 +1,4 @@
-package asyncds
+package asyncquerydata
 
 import (
 	"sync"
