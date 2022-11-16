@@ -6,13 +6,13 @@ import (
 )
 
 // getErrorFrameFromQuery returns a error frames with empty data and meta fields
-func getErrorFrameFromQuery(query *AsyncQuery) backend.DataResponse {
+func getErrorFrameFromQuery(query *AsyncQuery, err error) backend.DataResponse {
 	frames := data.Frames{}
 	frame := data.NewFrame(query.RefID)
 	frame.Meta = &data.FrameMeta{}
 	frames = append(frames, frame)
 	return backend.DataResponse{
 		Frames: frames,
-		Error:  nil,
+		Error:  err,
 	}
 }

@@ -12,7 +12,7 @@ type AsyncQueryDataProvider interface {
 	GetQueryID(ctx context.Context, query backend.DataQuery) (string, error)
 	GetQueryStatus(ctx context.Context, queryId string) (QueryStatus, error)
 	CancelQuery(ctx context.Context, queryId string) error
-	GetResult(ctx context.Context, refId, queryId string) (backend.DataResponse, error)
+	GetResult(ctx context.Context, refId, queryId string) backend.DataResponse
 }
 
 type AsyncQueryDataHandler struct {
@@ -47,18 +47,12 @@ func (ds *AsyncQueryDataHandler) QueryData(ctx context.Context, req *backend.Que
 		wg.Add(1)
 		go func(query backend.DataQuery) {
 			var dataResponse backend.DataResponse
-			var err error
 			if isAsyncMode {
-				dataResponse, err = ds.handleAsyncQuery(ctx, query)
+				dataResponse = ds.handleAsyncQuery(ctx, query)
 			} else {
-				dataResponse, err = ds.handleSyncQuery(ctx, query)
+				dataResponse = ds.handleSyncQuery(ctx, query)
 			}
-			if err != nil {
-				dataResponse.Error = err
-			}
-
 			response.Set(query.RefID, dataResponse)
-
 			wg.Done()
 		}(q)
 	}
