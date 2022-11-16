@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func (adq *AsyncQueryDataHandler) handleSyncQuery(ctx context.Context, query backend.DataQuery) (data.Frames, error) {
+func (adq *AsyncQueryDataHandler) handleSyncQuery(ctx context.Context, query backend.DataQuery) (backend.DataResponse, error) {
 	asyncQuery, err := getAsyncQuery(query)
 	if err != nil {
 		return getErrorFrameFromQuery(asyncQuery), err
@@ -19,8 +18,8 @@ func (adq *AsyncQueryDataHandler) handleSyncQuery(ctx context.Context, query bac
 	}
 
 	if err := adq.waitOnQuery(ctx, queryId); err != nil {
-		return nil, err
+		return getErrorFrameFromQuery(asyncQuery), err
 	}
 
-	return adq.provider.GetResult(ctx, queryId)
+	return adq.provider.GetResult(ctx, query.RefID, queryId)
 }

@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type AsyncQueryDataProvider interface {
@@ -13,7 +12,7 @@ type AsyncQueryDataProvider interface {
 	GetQueryID(ctx context.Context, query backend.DataQuery) (string, error)
 	GetQueryStatus(ctx context.Context, queryId string) (QueryStatus, error)
 	CancelQuery(ctx context.Context, queryId string) error
-	GetResult(ctx context.Context, queryId string) (data.Frames, error)
+	GetResult(ctx context.Context, refId, queryId string) (backend.DataResponse, error)
 }
 
 type AsyncQueryDataHandler struct {
@@ -47,17 +46,18 @@ func (ds *AsyncQueryDataHandler) QueryData(ctx context.Context, req *backend.Que
 	for _, q := range req.Queries {
 		wg.Add(1)
 		go func(query backend.DataQuery) {
-			var frames data.Frames
+			var dataResponse backend.DataResponse
 			var err error
 			if isAsyncMode {
-				frames, err = ds.handleAsyncQuery(ctx, query)
+				dataResponse, err = ds.handleAsyncQuery(ctx, query)
 			} else {
-				frames, err = ds.handleSyncQuery(ctx, query)
+				dataResponse, err = ds.handleSyncQuery(ctx, query)
 			}
-			response.Set(query.RefID, backend.DataResponse{
-				Frames: frames,
-				Error:  err,
-			})
+			if err != nil {
+				dataResponse.Error = err
+			}
+
+			response.Set(query.RefID, dataResponse)
 
 			wg.Done()
 		}(q)

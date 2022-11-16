@@ -8,7 +8,7 @@ import (
 )
 
 // handleQuery will call query, and attempt to reconnect if the query failed
-func (adq *AsyncQueryDataHandler) handleAsyncQuery(ctx context.Context, query backend.DataQuery) (data.Frames, error) {
+func (adq *AsyncQueryDataHandler) handleAsyncQuery(ctx context.Context, query backend.DataQuery) (backend.DataResponse, error) {
 	asyncQuery, err := getAsyncQuery(query)
 	if err != nil {
 		return getErrorFrameFromQuery(asyncQuery), err
@@ -19,10 +19,12 @@ func (adq *AsyncQueryDataHandler) handleAsyncQuery(ctx context.Context, query ba
 		if err != nil {
 			return getErrorFrameFromQuery(asyncQuery), err
 		}
-		return data.Frames{
-			{Meta: &data.FrameMeta{
-				// ExecutedQueryString: q.RawSQL,
-				Custom: queryMeta{QueryID: queryID, Status: "started"}},
+		return backend.DataResponse{
+			Frames: data.Frames{
+				{Meta: &data.FrameMeta{
+					// ExecutedQueryString: q.RawSQL,
+					Custom: queryMeta{QueryID: queryID, Status: "started"}},
+				},
 			},
 		}, nil
 	}
@@ -33,13 +35,15 @@ func (adq *AsyncQueryDataHandler) handleAsyncQuery(ctx context.Context, query ba
 	}
 	customMeta := queryMeta{QueryID: asyncQuery.QueryID, Status: status.String()}
 	if !status.Finished() {
-		return data.Frames{
-			{Meta: &data.FrameMeta{
-				// ExecutedQueryString: q.RawSQL,
-				Custom: customMeta},
+		return backend.DataResponse{
+			Frames: data.Frames{
+				{Meta: &data.FrameMeta{
+					// ExecutedQueryString: q.RawSQL,
+					Custom: customMeta},
+				},
 			},
 		}, nil
 	}
 
-	return adq.provider.GetResult(ctx, asyncQuery.QueryID)
+	return adq.provider.GetResult(ctx, query.RefID, asyncQuery.QueryID)
 }
